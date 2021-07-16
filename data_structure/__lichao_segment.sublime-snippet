@@ -1,0 +1,66 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Li Chao Tree - 선분 삽입 (Min Ver)
+	Update는 O(log^2X), Query는 O(logX). 선분 하나당 공간복잡도는 O(QlogX)
+	LiChao tree(Q,L,R) : 선분 Q개만큼 메모리를 할당하고 쿼리로 들어오는 x좌표가 [L,R]구간에서만 들어온다고 선언한다.
+	tree.Update(L,R,A,B) : [L,R] 구간에 선분 y=Ax+B를 삽입한다.
+	tree.Query(X) : 삽입된 모든 선분들 중 x좌표가 X일 때의 min값을 리턴한다.
+*/
+struct LiChaoNode { ll l, r, a, b; };
+struct LiChao {
+	vector<LiChaoNode> seg;
+	int P; ll L, R;
+	LiChao() {}
+	LiChao(int q, ll l, ll r) { seg = vector<LiChaoNode>(q*((int)ceil(log2(r - l + 1)) + 1) * 4 + 3, { 0, 0, 0, 8000000000000000000 }); P = 2; L = l; R = r; }
+	void Update(ll le, ll ri, ll a, ll b, int n, ll l, ll r) {
+		if (r < le || ri < l) return;
+		if (l < le || ri < r) {
+			ll m = l + r >> 1;
+			if (le <= m) {
+				if (seg[n].l == 0) seg[n].l = P++;
+				Update(le, ri, a, b, seg[n].l, l, m);
+			}
+			if (m + 1 <= ri) {
+				if (seg[n].r == 0) seg[n].r = P++;
+				Update(le, ri, a, b, seg[n].r, m + 1, r);
+			}
+			return;
+		}
+		ll &sa = seg[n].a, &sb = seg[n].b;
+		if (a*l + b < sa*l + sb) {
+			swap(a, sa), swap(b, sb);
+		}
+		if (a*r + b > sa*r + sb) return; //한 직선이 완전히 지배
+		if (l == r) return;
+		ll m = l + r >> 1;
+		if (a*m + b < sa*m + sb) { //교점이 왼쪽
+			swap(a, sa), swap(b, sb);
+			if (seg[n].l == 0) seg[n].l = P++;
+			Update(le, ri, a, b, seg[n].l, l, m);
+		}
+		else { //교점이 오른쪽
+			if (seg[n].r == 0) seg[n].r = P++;
+			Update(le, ri, a, b, seg[n].r, m + 1, r);
+		}
+	}
+	void Update(ll le, ll ri, ll a, ll b) {
+		return Update(le, ri, a, b, 1, L, R);
+	}
+	ll Query(ll x, int n, ll l, ll r) {
+		if (n == 0) return 8000000000000000000;
+		ll &sa = seg[n].a, &sb = seg[n].b;
+		ll m = l + r >> 1;
+		if (x <= m) return min(sa*x + sb, Query(x, seg[n].l, l, m));
+		return min(sa*x + sb, Query(x, seg[n].r, m + 1, r));
+	}
+	ll Query(ll x) {
+		return Query(x, 1, L, R);
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__lichao_segment</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

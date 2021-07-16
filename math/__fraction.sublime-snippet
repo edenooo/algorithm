@@ -1,0 +1,26 @@
+<snippet>
+	<content><![CDATA[
+struct Frac {
+	ll a, b;
+	Frac() { a = 0; b = 1; }
+	Frac(ll _a, ll _b) { ll g = gcd(_a, _b); a = _a/g; b = _b/g; if (b < 0) a = -a, b = -b; }
+	Frac operator-() { return Frac(-a, b); }
+	Frac operator+(Frac n) { return Frac(a*n.b+b*n.a, b*n.b); }
+	Frac operator-(Frac n) { return Frac(a*n.b-b*n.a, b*n.b); }
+	Frac operator*(Frac n) { return Frac(a*n.a, b*n.b); }
+	Frac operator/(Frac n) { return Frac(a*n.b, b*n.a); }
+	void operator+=(Frac n) { *this = *this + n; }
+	void operator-=(Frac n) { *this = *this - n; }
+	void operator*=(Frac n) { *this = *this * n; }
+	void operator/=(Frac n) { *this = *this / n; }
+};
+ostream& operator<<(ostream& out, Frac &n) {
+	out << n.a; if (n.b != 1) out << "/" << n.b;
+	return out;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__fraction</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

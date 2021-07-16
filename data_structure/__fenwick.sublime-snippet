@@ -1,0 +1,26 @@
+<snippet>
+	<content><![CDATA[
+#define DATA ll
+#define FENWICK_SIZE 1000000
+DATA fen[FENWICK_SIZE+1];
+DATA Sum(int idx) {
+	DATA ret = 0;
+	while(idx > 0) {
+		ret += fen[idx];
+		idx &= idx-1;
+	}
+	return ret;
+}
+void Add(int idx, DATA val) {
+	// 구간업뎃일 때 [<=0,r]+=1 을 [1,r]+=1로 고쳐야 한다.
+	while(1 <= idx && idx <= FENWICK_SIZE) {
+		fen[idx] += val;
+		idx += idx & -idx;
+	}
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__fenwick</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

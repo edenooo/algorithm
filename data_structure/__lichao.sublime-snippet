@@ -1,0 +1,81 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Li Chao Tree (Min Ver)
+	Undo를 넣으면 메모리가 O(QlogX)가 되므로 필요 없으면 빼자.
+	LiChao tree(Q,L,R) : 직선 Q개만큼 메모리를 할당하고 쿼리로 들어오는 x좌표가 [L,R]구간에서만 들어온다고 선언한다.
+	tree.Update(A,B) : 직선 y=Ax+B를 삽입한다.
+	tree.Query(X) : 삽입된 모든 직선들 중 x좌표가 X일 때의 min값을 리턴한다.
+	tree.Undo() : 직선을 pop_back한다.
+*/
+struct LiChaoNode { ll l, r, a, b; };
+struct UndoNode { int n; ll a, b; };
+struct LiChao {
+	vector<LiChaoNode> seg;
+	vector<vector<UndoNode> > undo;
+	vector<pair<int, bool> > undo2;
+	int P; ll L, R;
+	LiChao() {}
+	LiChao(int q, ll l, ll r) { seg = vector<LiChaoNode>(q + 2, { 0, 0, 0, 8000000000000000000 }); P = 2; L = l; R = r; }
+	void Update(ll a, ll b, int n, ll l, ll r) {
+		ll &sa = seg[n].a, &sb = seg[n].b;
+		if (a*l + b < sa*l + sb) {
+			swap(a, sa), swap(b, sb);
+			//undo.back().push_back({n, a, b});
+		}
+		if (a*r + b > sa*r + sb) return; //한 직선이 완전히 지배
+		if (l == r) return;
+		ll m = l + r >> 1;
+		if (a*m + b < sa*m + sb) { //교점이 왼쪽
+			swap(a, sa), swap(b, sb);
+			//undo.back().push_back({n, a, b});
+			if (seg[n].l == 0) {
+				seg[n].l = P++;
+				//undo2.back() = {n, false};
+			}
+			Update(a, b, seg[n].l, l, m);
+		}
+		else { //교점이 오른쪽
+			if (seg[n].r == 0) {
+				seg[n].r = P++;
+				//undo2.back() = {n, true};
+			}
+			Update(a, b, seg[n].r, m + 1, r);
+		}
+	}
+	void Update(ll a, ll b) {
+		//undo.push_back(vector<UndoNode>());
+		//undo2.push_back({0, false});
+		return Update(a, b, 1, L, R);
+	}
+	ll Query(ll x, int n, ll l, ll r) {
+		if (n == 0) return 8000000000000000000;
+		ll &sa = seg[n].a, &sb = seg[n].b;
+		ll m = l + r >> 1;
+		if (x <= m) return min(sa*x + sb, Query(x, seg[n].l, l, m));
+		return min(sa*x + sb, Query(x, seg[n].r, m + 1, r));
+	}
+	ll Query(ll x) {
+		return Query(x, 1, L, R);
+	}
+	void Undo() {
+		// 하나의 n에서 swap이 두 번 일어날 수 있으므로 거꾸로 돌아야 한다.
+		for (int i = (int)undo.back().size() - 1; i >= 0; i--) {
+			auto &it = undo.back()[i];
+			seg[it.n].a = it.a; seg[it.n].b = it.b;
+		}
+		if (undo2.back().first) {
+			if (undo2.back().second == false) seg[undo2.back().first].l = 0;
+			else seg[undo2.back().first].r = 0;
+			P--;
+		}
+		undo.pop_back();
+		undo2.pop_back();
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__lichao</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

@@ -1,0 +1,22 @@
+<snippet>
+	<content><![CDATA[
+void Z_array(const string &s, int A[])
+{
+	int r = -1, p = -1;
+	for(int i=1; i<s.size(); i++)
+	{
+		if (r < i) A[i] = -1;
+		else A[i] = min(A[i-p], r-i);
+
+		while(i+A[i]+1 < s.size() && s[A[i]+1]==s[i+A[i]+1]) A[i]++;
+
+		if (r < i+A[i])
+			r = i+A[i], p = i;
+	}
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__z</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

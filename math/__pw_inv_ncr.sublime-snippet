@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+/*
+	fa[], ifa[] 크기 조정, MOD 추가
+	init_fa(n) : fa, ifa의 [0,n] 구간을 전처리한다.
+*/
+ll fa[1000001], ifa[1000001];
+ll pw(ll a, ll n)
+{
+	ll ret = 1;
+	while(n)
+	{
+		if (n&1) ret=ret*a%MOD;
+		a=a*a%MOD;
+		n>>=1;
+	}
+	return ret;
+}
+ll inv(ll a)
+{
+	return pw(a, MOD-2);
+}
+ll C(ll n, ll r)
+{
+	if (n < 0 || r < 0 || r > n) return 0LL;
+	return fa[n]*ifa[r]%MOD*ifa[n-r]%MOD;
+}
+void init_fa(int n)
+{
+	fa[0] = 1;
+	for(int i=1; i<=n; i++)
+		fa[i] = fa[i-1] * i % MOD;
+	ifa[n] = inv(fa[n]);
+	for(int i=n-1; i>=0; i--)
+		ifa[i] = ifa[i+1] * (i+1) % MOD;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__pw_inv_ncr</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

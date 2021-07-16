@@ -1,0 +1,59 @@
+<snippet>
+	<content><![CDATA[
+/*
+	BCC (1-based)
+	BCC bcc(N, g) : 정점 N개인 그래프 g로 전처리한다.
+	bcc.Run() : g를 BCC들로 분리한다.
+*/
+struct BCC {
+	vector<vector<pair<int, int> > > bcc;
+	vector<pair<int, int> > stk;
+	vector<vector<int> > g;
+	vector<bool> visit;
+	vector<int> h, up;
+	int _N;
+	BCC(int N, vector<vector<int> > &gph) {
+		_N = N; g = gph;
+		visit = vector<bool>(_N + 10, false);
+		h = up = vector<int>(_N + 10, 0);
+	}
+	void DFS(int n, int prev) {
+		visit[n] = true;
+		h[n] = h[prev] + 1;
+		up[n] = h[n];
+		for (auto next : g[n]) {
+			if (next == prev) continue; // 양방향 재방문 막기
+			if (visit[next]) {
+				if (h[n] < h[next]) continue; // 순방향 재방문 막기
+				// 역방향
+				up[n] = min(up[n], h[next]);
+				stk.push_back({ n, next });
+				continue;
+			}
+			// 트리
+			stk.push_back({ n, next });
+			DFS(next, n);
+			up[n] = min(up[n], up[next]);
+			if (h[n] <= up[next]) { // BCC 분리
+				bcc.push_back(vector<pair<int, int> >());
+				while (stk.back() != make_pair(n, next)) {
+					bcc.back().push_back(stk.back());
+					stk.pop_back();
+				}
+				bcc.back().push_back(stk.back());
+				stk.pop_back();
+			}
+		}
+	}
+	void Run() {
+		for (int i = 1; i <= _N; i++)
+			if (visit[i] == false)
+				DFS(i, 0);
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__bcc</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

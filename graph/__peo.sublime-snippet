@@ -1,0 +1,77 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Perfect Elimination Ordering O(ElogE) (1-based)
+	인접리스트 정렬과 이진탐색을 빼면 선형이다.
+	PEO(N,g).Run() : 정점 N개인 그래프 g의 PEO를 리턴한다.
+*/
+struct Set {
+	list<int> L; int last;
+	Set() { last = 0; }
+};
+struct PEO {
+	int N;
+	vector<vector<int> > g;
+	vector<int> vis, res;
+	list<Set> L;
+	vector<list<Set>::iterator> ptr;
+	vector<list<int>::iterator> ptr2;
+	PEO(int n, vector<vector<int> > _g) {
+		N = n; g = _g;
+		for (int i = 1; i <= N; i++)
+			sort(g[i].begin(), g[i].end());
+		vis.resize(N + 1);
+		ptr.resize(N + 1); ptr2.resize(N + 1);
+		L.push_back(Set());
+		for (int i = 1; i <= N; i++) {
+			L.back().L.push_back(i);
+			ptr[i] = L.begin();
+			ptr2[i] = prev(L.back().L.end());
+		}
+	}
+	vector<int> Run() {
+		// lexicographic BFS
+		int time = 0;
+		while (!L.empty()) {
+			if (L.front().L.empty()) {
+				L.pop_front();
+				continue;
+			}
+			auto it = L.begin();
+			int n = it->L.front(); it->L.pop_front();
+			vis[n] = ++time;
+			res.push_back(n);
+			for (int next : g[n]) {
+				if (vis[next]) continue;
+				if (ptr[next]->last != time) {
+					L.insert(ptr[next], Set());
+					ptr[next]->last = time;
+				}
+				ptr[next]->L.erase(ptr2[next]);
+				ptr[next]--;
+				ptr[next]->L.push_back(next);
+				ptr2[next] = prev(ptr[next]->L.end());
+			}
+		}
+		// PEO existence check
+		for (int n = 1; n <= N; n++) {
+			int mx = 0;
+			for (int next : g[n])
+				if (vis[n] > vis[next])
+					mx = max(mx, vis[next]);
+			if (mx == 0) continue;
+			int w = res[mx - 1];
+			for (int next : g[n])
+				if (vis[w] > vis[next] && !binary_search(g[w].begin(), g[w].end(), next))
+					return vector<int>(); // w와 next가 이어져 있지 않다면 not chordal
+		}
+		reverse(res.begin(), res.end());
+		return res;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__peo</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

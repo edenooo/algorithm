@@ -1,0 +1,99 @@
+<snippet>
+	<content><![CDATA[
+/*
+	MCMF O(VE+fElogV), Min Cost, Using Cycle Canceling Version
+	주의 : 문제가 MCF를 요구하는 경우도 있으니 잘 확인하자.
+	MCMF<int> mcmf(V) : 정점 V개로 그래프를 생성한다.
+	mcmf.AddEdge(a, b, c, w) : (a, b) 간선을 용량 c, 비용 w로 생성한다.
+	mcmf.Run(src, snk) : MCMF를 찾고 {flow, cost}를 리턴한다.
+*/
+template<class Cost> struct MCMF {
+	struct Edge { int next, rev, cap; Cost cost; };
+	int N;
+	vector<vector<Edge> > g;
+	vector<Cost> dual;
+	MCMF(int n) : N(n), g(n), dual(n) {}
+	void AddEdge(int a, int b, int cap, Cost cost) {
+		g[a].push_back({ b, (int)g[b].size(), cap, cost });
+		g[b].push_back({ a, (int)g[a].size() - 1, 0, -cost });
+	}
+	void MakePositive(int src, int snk) { // 초기 그래프에 음수 가중치가 없으면 필요 없다.
+		vector<Cost> dist(N, numeric_limits<Cost>::max() / 2);
+		vector<bool> inq(N), vis(N);
+		queue<int> q; q.push(src); dist[src] = 0; inq[src] = true;
+		while (!q.empty()) {
+			int n = q.front(); q.pop(); inq[n] = false; vis[n] = true;
+			for (auto &e : g[n]) {
+				if (e.cap && dist[e.next] - dist[n] > e.cost) {
+					dist[e.next] = dist[n] + e.cost;
+					if (!inq[e.next]) q.push(e.next), inq[e.next] = true;
+				}
+			}
+		}
+		for (int n = 0; n < N; n++) {
+			if (!vis[n]) continue;
+			dual[n] -= dist[snk] - dist[n];
+		}
+	}
+	pair<int, Cost> Run(int src, int snk, int upper = 1234567890) {
+		MakePositive(src, snk);
+		vector<Cost> dist(N);
+		vector<int> p(N), pp(N);
+		vector<bool> vis(N);
+		auto dual_ref = [&]() {
+			fill(dist.begin(), dist.end(), numeric_limits<Cost>::max() / 2);
+			fill(p.begin(), p.end(), -1);
+			fill(pp.begin(), pp.end(), -1);
+			fill(vis.begin(), vis.end(), false);
+			struct Node {
+				Cost cost; int n;
+				bool operator<(Node r) const { return cost > r.cost; }
+			};
+			priority_queue<Node> pq;
+			pq.push({ 0, src }); dist[src] = 0;
+			while (!pq.empty()) {
+				int n = pq.top().n; pq.pop();
+				if (vis[n]) continue;
+				vis[n] = true;
+				if (n == snk) break;
+				for (int i = 0; i < g[n].size(); i++) {
+					auto e = g[n][i];
+					if (vis[e.next] || !e.cap) continue;
+					Cost cost = e.cost - dual[e.next] + dual[n];
+					if (dist[e.next] - dist[n] > cost) {
+						dist[e.next] = dist[n] + cost;
+						p[e.next] = n; pp[e.next] = i;
+						pq.push({ dist[e.next], e.next });
+					}
+				}
+			}
+			if (!vis[snk]) return false;
+			for (int n = 0; n < N; n++) {
+				if (!vis[n]) continue;
+				dual[n] -= dist[snk] - dist[n];
+			}
+			return true;
+		};
+		int flow = 0;
+		Cost cost = 0;
+		while (flow < upper) {
+			if (!dual_ref()) break;
+			int c = upper - flow;
+			for (int n = snk; n != src; n = p[n])
+				c = min(c, g[p[n]][pp[n]].cap);
+			Cost d = -dual[src];
+			for (int n = snk; n != src; n = p[n]) {
+				auto& e = g[p[n]][pp[n]];
+				e.cap -= c; g[n][e.rev].cap += c;
+			}
+			flow += c; cost += c * d;
+		}
+		return { flow, cost };
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__mcmf</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

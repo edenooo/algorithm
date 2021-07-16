@@ -1,0 +1,49 @@
+<snippet>
+	<content><![CDATA[
+/*
+	컨벡스 헐 + 로테이팅 캘리퍼스 O(NlogN), 정렬 제외 O(N)
+	convex_hull() : 입력으로 v를 주면 up,down,hull을 생성한다.
+	rotating_calipers() : 입력으로 v,up,down을 주면 최장 거리 제곱을 리턴한다.
+*/
+vector<pair<ll, ll> > v; // {x,y}, input
+vector<int> up, down, hull; // output
+ll ccw(ll ax, ll ay, ll bx, ll by, ll ox, ll oy) { return (ax - ox)*(by - oy) - (bx - ox)*(ay - oy); }
+ll ccwP(int a, int b, int o) { return ccw(v[a].first, v[a].second, v[b].first, v[b].second, v[o].first, v[o].second); }
+void convex_hull() {
+	sort(v.begin(), v.end());
+	for (int i = 0; i < v.size(); i++) {
+		while (up.size() >= 2 && ccwP(up[up.size() - 2], up.back(), i) >= 0) up.pop_back();
+		up.push_back(i);
+		while (down.size() >= 2 && ccwP(down[down.size() - 2], down.back(), i) <= 0) down.pop_back();
+		down.push_back(i);
+	}
+	hull = up;
+	for (int i = (int)down.size() - 2; i >= 1; i--)
+		hull.push_back(down[i]);
+}
+ll Dist(int a, int b) {
+	ll ax = v[a].first, ay = v[a].second, bx = v[b].first, by = v[b].second;
+	return (ax - bx)*(ax - bx) + (ay - by)*(ay - by);
+}
+ll rotating_calipers() {
+	ll ret = 0;
+	for (int i = 0, j = (int)down.size() - 1; i + 1 < up.size() || j > 0; ) {
+		ret = max(ret, Dist(up[i], down[j]));
+		if (i + 1 == up.size()) j--;
+		else if (j == 0) i++;
+		else {
+			ll ax = v[up[i + 1]].first - v[up[i]].first;
+			ll ay = v[up[i + 1]].second - v[up[i]].second;
+			ll bx = v[down[j]].first - v[down[j - 1]].first;
+			ll by = v[down[j]].second - v[down[j - 1]].second;
+			if (ay*bx > by*ax) i++; else j--;
+		}
+	}
+	return ret;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__convex_hull</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

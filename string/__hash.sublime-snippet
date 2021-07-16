@@ -1,0 +1,46 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Hash
+	vector가 느려서 전역으로 뺐는데, 다시 집어넣어도 된다.
+	P = 2로 줄여도 대부분의 경우 맞는다.
+	Hash hash(s) : 1-based 문자열 s로 해시를 전처리한다. O(N)
+	hash.Query(L,R) : [L, R] 구간의 해시값을 리턴한다. O(1)
+*/
+const int P = 4;
+const ll pri[4] = { 2, 3, 5, 13 };
+const ll mod[4] = { 993244853, 998244353, 1000000007, 1000000009 };
+ll H[P][1010101], mul[P][1010101];
+struct Hash {
+	// vector<ll> S[N], mul[N];
+	Hash(string s) {
+		for (int k = 0; k < P; k++) {
+			//H[k] = vector<ll>(s.size(), 0);
+			//mul[k] = vector<ll>(s.size());
+			mul[k][0] = 1;
+		}
+		for (int k = 0; k < P; k++)
+			for (int i = 1; i < s.size(); i++) {
+				H[k][i] = (H[k][i - 1] * pri[k] + s[i]) % mod[k];
+				mul[k][i] = mul[k][i - 1] * pri[k] % mod[k];
+			}
+	}
+	pair<ll, ll> Query(int L, int R) {
+		pair<ll, ll> ret = { 0, 0 };
+		for (int k = 0; k < P; k++) {
+			ll val = (H[k][R] - H[k][L - 1] * mul[k][R - L + 1]) % mod[k]; // R-L이 아니다.
+			if (val < 0) val += mod[k];
+			if (k == 0) ret.first += val;
+			else if (k == 1) ret.first *= (ll)2e9, ret.first += val;
+			else if (k == 2) ret.second += val;
+			else if (k == 3) ret.second *= (ll)2e9, ret.second += val;
+		}
+		return ret;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__hash</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
