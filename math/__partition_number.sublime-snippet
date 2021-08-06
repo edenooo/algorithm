@@ -1,0 +1,23 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Partition Number O(nlogn)
+	__polynomial이 필요하다. mod, maxn 수정하자.
+*/
+polyn partition_number(int n)
+{
+	polyn P; P.a.resize(n+1); P.a[0] = base(1);
+	// pentagonal number theorem
+	// (1-x)(1-x^2)(1-x^3)... = 1 + sum{1 <= k <= inf} (-1)^k * (x^{k(3k+1)/2} + x^{k(3k-1)/2})
+	for(int k=1; k*(3*k-1)/2<=n; k++)
+		P.a[k*(3*k-1)/2] = base((k & 1) ? -1 : 1);
+	for(int k=1; k*(3*k+1)/2<=n; k++)
+		P.a[k*(3*k+1)/2] = base((k & 1) ? -1 : 1);
+	return P.inv(n+1);
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__partition_number</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

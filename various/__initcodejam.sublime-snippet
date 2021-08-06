@@ -1,0 +1,35 @@
+<snippet>
+	<content><![CDATA[
+#include<bits/stdc++.h>
+using namespace std;
+
+#define INF 1234567890
+#define ll long long
+
+int T;
+int N;
+
+int main()
+{
+	ios::sync_with_stdio(0); cin.tie(0);
+	cin.exceptions(ios::badbit | ios::failbit);
+	cin >> T;
+	for(int tc=1; tc<=T; tc++)
+	{
+		cin >> N;
+		for(int i=1; i<=N; i++);
+
+		int res = 0;
+
+		cout << "Case #" << tc << ": ";
+		cout << res;
+		cout << "\n";
+	}
+	return 0;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__initcodejam</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

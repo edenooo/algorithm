@@ -1,0 +1,14 @@
+<snippet>
+	<content><![CDATA[
+// extgcd(a,b,1,0,0,1) : ax+by=gcd(a,b)인 {x,y}를 리턴한다.
+pair<ll,ll> extgcd(ll a, ll b, ll s1, ll s2, ll t1, ll t2) {
+  if (b == 0) return { s1, t1 };
+  ll q = a / b;
+  return extgcd(b, a-b*q, s2, s1-s2*q, t2, t1-t2*q);
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__extgcd</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

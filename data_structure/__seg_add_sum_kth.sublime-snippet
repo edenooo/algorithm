@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+#define DATA ll
+#define IDENTITY 0
+DATA init[1010101], seg[2100000];
+DATA Merge(DATA l, DATA r)
+{
+	return l + r; // sum
+}
+DATA Init(int n, int l, int r)
+{
+	if (l == r) return seg[n] = init[r]; // init
+	int mid = l+r>>1;
+	return seg[n] = Merge(Init(n<<1, l, mid), Init(n<<1|1, mid+1, r));
+}
+DATA Update(int idx, DATA val, int n, int l, int r)
+{
+	if (r < idx || idx < l) return seg[n];
+	if (l == r) return seg[n] += val; // add
+	int mid = l+r>>1;
+	return seg[n] = Merge(Update(idx, val, n<<1, l, mid), Update(idx, val, n<<1|1, mid+1, r));
+}
+DATA Query(int L, int R, int n, int l, int r)
+{
+	if (r < L || R < l) return IDENTITY;
+	if (L <= l && r <= R) return seg[n];
+	int mid = l+r>>1;
+	return Merge(Query(L, R, n<<1, l, mid), Query(L, R, n<<1|1, mid+1, r));
+}
+DATA Kth(DATA k, int n, int l, int r) // 1 <= k <= seg[1]
+{
+	if (l == r) return r;
+	int mid = l+r>>1;
+	if (seg[n<<1] >= k) return Kth(k, n<<1, l, mid);
+	return Kth(k-seg[n<<1], n<<1|1, mid+1, r);
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__seg_add_sum_kth</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

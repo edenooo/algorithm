@@ -1,0 +1,262 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Polynomial Library (aeren)
+	inverse, /=, %=, ^=, derivative, antiderivate, sqrt,
+	logarithm, exponential, multiply_all, evaluate,
+	interpolation, multipoint_evaluation, online FFT, chirpz
+	resultant는 나중에
+*/
+
+// O(n log n)
+// Requires number_theoric_transform
+// template<class T>
+// vector<T> operator*(const vector<T> &p, const vector<T> &q){
+// 	return convolute_ntt(p, q);
+// }
+// O(n log n)
+// Requires fast_fourier_transform
+template<class T>
+vector<T> operator*(const vector<T> &p, const vector<T> &q){
+	return convolute(p, q);
+}
+// O(n log n)
+// Requires fast_fourier_transform and convolute_modular
+// template<class T>
+// vector<T> operator*(const vector<T> &p, const vector<T> &q){
+// 	return convolute_modular(p, q);
+// }
+// Naive multiplication
+// O(n m)
+// template<class T>
+// vector<T> operator*(const vector<T> &a, const vector<T> &b){
+// 	if(a.empty() || b.empty()) return {};
+// 	vector<T> c(a.size() + b.size() - 1, 0);
+// 	for(auto i = 0; i < (int)a.size(); ++ i) for(auto j = 0; j < (int)b.size(); ++ j) c[i + j] += a[i] * b[j];
+// 	return c;
+// }
+template<class T>
+vector<T> &operator*=(vector<T> &a, const vector<T> &b){
+	return a = a * b;
+}
+template<class T, class U>
+vector<T> &operator*=(vector<T> &a, U x){
+	for(auto &c: a) c *= x;
+	return a;
+}
+template<class T, class U>
+vector<T> operator*(const vector<T> &a, U x){
+	vector<T> b = a;
+	return b *= x;
+}
+template<class T, class U>
+vector<T> operator*(U x, const vector<T> &a){
+	vector<T> b = a;
+	return b *= x;
+}
+template<class T>
+vector<T> &operator+=(vector<T> &a, const vector<T> &b){
+	if(a.size() < b.size()) a.resize(b.size());
+	for(auto i = 0; i < (int)b.size(); ++ i) a[i] += b[i];
+	return a;
+}
+template<class T>
+vector<T> operator+(const vector<T> &a, const vector<T> &b){
+	vector<T> c = a;
+	return c += b;
+}
+template<class T>
+vector<T> &operator-=(vector<T> &a, const vector<T> &b){
+	if(a.size() < b.size()) a.resize(b.size());
+	for(auto i = 0; i < (int)b.size(); ++ i) a[i] -= b[i];
+	return a;
+}
+template<class T>
+vector<T> operator-(const vector<T> &a, const vector<T> &b){
+	vector<T> c = a;
+	return c -= b;
+}
+template<class T>
+vector<T> operator-(const vector<T> &a){
+	vector<T> c = a;
+	for(auto i = 0; i < (int)c.size(); ++ i) c[i] = -c[i];
+	return c;
+}
+template<class T>
+vector<T> inverse(const vector<T> &a){
+	assert(!a.empty());
+	int n = (int)a.size();
+	vector<T> b = {1 / a[0]};
+	while((int)b.size() < n){
+		vector<T> a_cut(a.begin(), a.begin() + min(a.size(), b.size() << 1)), x = b * b * a_cut;
+		b.resize(b.size() << 1);
+		for(auto i = (int)b.size() >> 1; i < (int)min(x.size(), b.size()); ++ i) b[i] = -x[i];
+	}
+	b.resize(n);
+	return b;
+}
+template<class T>
+vector<T> &operator/=(vector<T> &a, const vector<T> &b){
+	int n = (int)a.size(), m = (int)b.size();
+	if(n < m) a.clear();
+	else{
+		vector<T> d = b;
+		reverse(a.begin(), a.end());
+		reverse(d.begin(), d.end());
+		d.resize(n - m + 1);
+		a *= inverse(d);
+		a.erase(a.begin() + n - m + 1, a.end());
+		reverse(a.begin(), a.end());
+	}
+	return a;
+}
+template<class T>
+vector<T> operator/(const vector<T> &a, const vector<T> &b){
+	vector<T> c = a;
+	return c /= b;
+}
+template<class T>
+vector<T> &operator/=(vector<T> &a, T x){
+	T inv_x = 1 / x;
+	for(auto &c: a) c *= inv_x;
+	return a;
+}
+template<class T>
+vector<T> operator/(const vector<T> &a, T x){
+	vector<T> b = a;
+	return b /= x;
+}
+template<class T>
+vector<T> &operator%=(vector<T> &a, const vector<T> &b){
+	int n = (int)a.size(), m = (int)b.size();
+	if(n >= m){
+		vector<T> c = (a / b) * b;
+		a.resize(m - 1);
+		for(auto i = 0; i < m - 1; ++ i) a[i] -= c[i];
+	}
+	return a;
+}
+template<class T>
+vector<T> operator%(const vector<T> &a, const vector<T> &b){
+	vector<T> c = a;
+	return c %= b;
+}
+template<class T>
+vector<T> derivative(const vector<T> &a){
+	vector<T> c = a;
+	for(auto i = 0; i < (int)c.size(); ++ i) c[i] *= i;
+	if(!c.empty()) c.erase(c.begin());
+	return c;
+}
+template<class T>
+vector<T> antiderivative(const vector<T> &a){
+	vector<T> c = a;
+	c.insert(c.begin(), 0);
+	for(auto i = 1; i < (int)c.size(); ++ i) c[i] /= i;
+	return c;
+}
+template<class T>
+vector<T> logarithm(const vector<T> &a){
+	assert(!a.empty() && a[0] == 1);
+	vector<T> u = antiderivative(derivative(a) * inverse(a));
+	u.resize(a.size());
+	return u;
+}
+template<class T>
+vector<T> exponential(const vector<T> &a){
+	assert(!a.empty() && a[0] == 0);
+	int n = (int)a.size();
+	vector<T> b = {1};
+	while((int)b.size() < n){
+		vector<T> x(a.begin(), a.begin() + min(a.size(), b.size() << 1));
+		x[0] += 1;
+		vector<T> old_b = b;
+		b.resize(b.size() << 1);
+		x -= logarithm(b);
+		x *= old_b;
+		for(auto i = (int)b.size() >> 1; i < (int)min(x.size(), b.size()); ++ i) b[i] = x[i];
+	}
+	b.resize(n);
+	return b;
+}
+template<class T, class U>
+vector<T> &operator^=(vector<T> &a, U e){
+	int n = (int)a.size();
+	if(!e){
+		fill(a.begin(), a.end(), 0);
+		a[0] = 1;
+		return a;
+	}
+	if(all_of(a.begin(), a.end(), [&](auto x){ return x == 0; })) return a = vector<T>(n, 0);
+	if(n < 60){
+		vector<T> res(n); res[0] = 1;
+		for(; e; e >>= 1, a *= a, a.resize(n)) if(e & 1) res *= a, res.resize(n);
+		swap(a, res);
+		return a;
+	}
+	int low = find_if(a.begin(), a.end(), [&](auto x){ return x; }) - a.begin();
+	if(1LL * low * e >= n) return a = vector<T>(n, 0);
+	a.erase(a.begin(), a.begin() + low);
+	T temp = a[0], low_c = 1;
+	for(auto f = e; f; f >>= 1, temp *= temp) if(f & 1) low_c *= temp;
+	a = exponential(T(e) * logarithm(a / a[0]));
+	a.insert(a.begin(), low * e, 0);
+	a.resize(n);
+	return a *= low_c;
+}
+template<class T, class U>
+vector<T> operator^(const vector<T> &a, U e){
+	vector<T> b = a;
+	return b ^= e;
+}
+template<class T>
+vector<T> multiply_all(const vector<vector<T>> &a){
+	if(a.empty()) return {0};
+	auto solve = [&](auto self, int l, int r)->vector<T>{
+		if(r - l == 1) return a[l];
+		int m = l + (r - l >> 1);
+		return self(self, l, m) * self(self, m, r);
+	};
+	return solve(solve, 0, (int)a.size());
+}
+template<class T, class U>
+T evaluate(const vector<T> &a, U x){
+	T res = {};
+	for(auto i = (int)a.size() - 1; i >= 0; -- i) res = res * x + a[i];
+	return res;
+}
+// O((Complexity of product) log n)
+template<class T>
+vector<T> polynomial_sqrt(const vector<T> &a){
+	assert(!a.empty() && a[0] == 1);
+	int n = (int)a.size();
+	vector<T> b = {1};
+	while((int)b.size() < n){
+		vector<T> x(a.begin(), a.begin() + min(a.size(), b.size() << 1));
+		b.resize(b.size() << 1);
+		x *= inverse(b);
+		T inv2 = 1 / static_cast<T>(2);
+		for(auto i = (int)b.size() >> 1; i < (int)min(x.size(), b.size()); ++ i) b[i] = x[i] * inv2;
+	}
+	b.resize(n);
+	return b;
+}
+template<class T>
+pair<vector<T>, vector<T> > divmod_naive(vector<T> A, const vector<T> &B) { // when divisor or quotient is small
+	vector<T> res;
+	while(A.size() >= B.size()) {
+		res.push_back(A.back() / B.back());
+		if (res.back() != (T)0)
+			for(int i=0; i<B.size(); i++)
+				A[A.size()-i-1] -= res.back() * B[B.size()-i-1];
+		A.pop_back();
+	}
+	reverse(res.begin(), res.end());
+	return {res, A};
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__polynomial</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

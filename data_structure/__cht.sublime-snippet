@@ -1,0 +1,46 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Convex Hull Trick (Min Ver)
+	Insert, Query 모두 Amortized O(1)이다.
+	기울기가 단조감소하게 삽입해야 한다. 쿼리로 주어지는 x좌표가 단조증가해야 한다.
+	CHT cht; //컨벡스 헐 트릭을 생성한다.
+	cht.Insert(A,B): 직선 y=Ax+B를 삽입한다. 직전에 호출한 Insert보다 A가 작거나 같아야 한다.
+	cht.Query(X): 현재까지 삽입된 모든 직선들 중 x좌표가 X일 때의 min값을 리턴한다.
+*/
+struct Line { ll a, b; double s; };
+struct CHT {
+	vector<Line> cht;
+	int pos;
+	CHT() { pos = 0; }
+	double Cross(Line &A, Line &B) {
+		return (double)(B.b - A.b) / (A.a - B.a);
+	}
+	void Insert(ll a, ll b) {
+		Line n = { a, b, -1e9 }; // -1e9 대신에 쿼리로 들어오는 x좌표의 min을 넣자.
+		while (!cht.empty()) {
+			if (cht.back().a == n.a) {
+				if (n.b < cht.back().b) cht.pop_back();
+				else return;
+			}
+			else {
+				n.s = Cross(cht.back(), n);
+				if (n.s <= cht.back().s) cht.pop_back();
+				else break;
+			}
+			if (pos == cht.size()) pos--;
+		}
+		cht.push_back(n);
+	}
+	ll Query(ll x) {
+		if (cht.size() == 0) return (ll)1e18; // max
+		while (pos + 1 < cht.size() && cht[pos + 1].s <= x) pos++;
+		return cht[pos].a * x + cht[pos].b;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__cht</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

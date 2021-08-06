@@ -1,0 +1,44 @@
+<snippet>
+	<content><![CDATA[
+struct BigInt {
+	vector<int> v;
+	BigInt() { }
+	BigInt(const string &s)
+	{
+		v = vector<int>(s.size(), 0);
+		for(int i=0; i<s.size(); i++)
+			v[(int)s.size()-1-i] = s[i]-'0';
+	}
+	BigInt operator+(BigInt &n)
+	{
+		BigInt ret;
+		ret.v.resize(max(v.size(), n.v.size())+1);
+		for(int i=0; i<ret.v.size(); i++)
+		{
+			if (i < v.size()) ret.v[i] += v[i];
+			if (i < n.v.size()) ret.v[i] += n.v[i];
+			if (ret.v[i] >= 10)
+			{
+				ret.v[i+1]++;
+				ret.v[i] -= 10;
+			}
+		}
+		while(!ret.v.empty() && ret.v.back() == 0) ret.v.pop_back();
+		return ret;
+	}
+	void print()
+	{
+		string ret;
+		while(!v.empty() && v.back() == 0) v.pop_back();
+		for(int i=(int)v.size()-1; i>=0; i--)
+			ret += (char)(v[i]+'0');
+		if (ret.empty()) ret = "0";
+		cout << ret;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__bigint</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

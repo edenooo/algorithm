@@ -1,0 +1,54 @@
+<snippet>
+	<content><![CDATA[
+const int _N = 500;
+int g[_N+5][_N+5], cost[_N+5];
+bool del[_N+5], vis[_N+5];
+struct StoerWagner {
+	int N;
+	StoerWagner(int n) {
+		N = n;
+		memset(g, 0, sizeof(g));
+		memset(del, 0, sizeof(del));
+	}
+	void AddEdge(int a, int b, int c) {
+		g[a][b] += c; g[b][a] += c;
+	}
+	int MinCut() {
+		int ret = 1e9;
+		for(int i=1; i<=N-1; i++) {
+			int s = -1, t = -1, cut = -1;
+			// find any s-t min cut
+			memset(cost, 0, sizeof(cost));
+			memset(vis, 0, sizeof(vis));
+			for(int j=1; j<=N-i+1; j++) {
+				int mx = -1, pos = -1;
+				for(int k=1; k<=N; k++) {
+					if (del[k] || vis[k]) continue;
+					if (mx < cost[k]) mx = cost[k], pos = k;
+				}
+				vis[pos] = true;
+				for(int k=1; k<=N; k++) {
+					if (del[k] || vis[k]) continue;
+					cost[k] += g[pos][k];
+				}
+				if (j+1 == N-i+1) s = pos;
+				else if (j == N-i+1) t = pos, cut = mx;
+			}
+			ret = min(ret, cut);
+			// merge s-t
+			del[t] = true;
+			for(int j=1; j<=N; j++) {
+				if (del[j]) continue;
+				g[s][j] += g[t][j];
+				g[j][s] += g[j][t];
+			}
+		}
+		return ret;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__stoer_wagner</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

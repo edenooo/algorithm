@@ -1,0 +1,123 @@
+<snippet>
+	<content><![CDATA[
+// bits/stdc++.h 쓰면 답이 달라진다.
+// https://codeforces.com/blog/entry/89399
+#include<iostream>
+#include<random>
+#include<ctime>
+#include<cassert>
+#include<immintrin.h>
+using namespace std;
+
+const int MAXN = 1 << 17; // 수정
+
+using DATA = int; // 32-bit만 가능하다.
+DATA seg[2 * MAXN];
+
+const DATA identity_element = 1234567890; // 수정
+DATA reduce(DATA a, DATA b) {
+	return min(a, b); // 수정
+}
+__attribute__((target("sse4.1"))) __m128i reduce(__m128i a, __m128i b) {
+	return _mm_min_epi32(a, b); // 수정
+}
+__attribute__((target("avx2"))) __m256i reduce(__m256i a, __m256i b) {
+	return _mm256_min_epi32(a, b); // 수정
+}
+
+static_assert((MAXN & (MAXN - 1)) == 0, "Segment tree size must be a power of two");
+static_assert(sizeof(DATA) == 4, "Segment tree elements must be 32-bit");
+
+int ffs(unsigned int x) {
+	return sizeof(unsigned int) * 8 - 1 - __builtin_clz(x);
+}
+
+// Returns sum/min/max/etc. in range [l; r], inclusive. The operation is determined by reduce()
+__attribute__((target("avx2"))) DATA query_parallel(int l, int r) {
+	if(l == r) {
+		return seg[l + MAXN];
+	}
+
+	int mbit = ffs(l ^ r);
+	int reset = ((1 << mbit) - 1);
+	int m = r & ~reset;
+
+	using vecint = DATA __attribute__((vector_size(32)));
+	__m256i identity_vec = _mm256_set1_epi32(identity_element);
+	vecint vec_ans = (vecint)identity_vec;
+	__m256i indexes = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
+
+	if((l & reset) != 0) {
+		int ll = l - 1 + MAXN;
+		int rr = m - 1 + MAXN;
+
+		int modbit = 0;
+		int maxmodbit = ffs(ll ^ rr) + 1;
+
+		vecint ll_vec = (vecint)_mm256_srav_epi32(_mm256_set1_epi32(ll), indexes);
+
+#define LOOP(content) if(modbit + 8 <= maxmodbit) { \
+			vec_ans = (vecint)reduce((__m256i)vec_ans, _mm256_i32gather_epi32((int*)seg, (__m256i)(((ll_vec & 1) - 1) & (ll_vec | 1)), 4)); \
+			ll_vec >>= 8; \
+			modbit += 8; \
+			content \
+		}
+		LOOP(LOOP(LOOP(LOOP())))
+#undef LOOP
+
+		__m256i tmp = _mm256_i32gather_epi32((int*)seg, (__m256i)(((ll_vec & 1) - 1) & (ll_vec | 1)), 4);
+		__m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(maxmodbit & 7), indexes);
+		vec_ans = (vecint)reduce((__m256i)vec_ans, _mm256_blendv_epi8(identity_vec, tmp, mask));
+	} else {
+		vec_ans[0] = reduce(vec_ans[0], seg[(l + MAXN) >> mbit]);
+	}
+
+	if((r & reset) != reset) {
+		int ll = m + MAXN;
+		int rr = r + 1 + MAXN;
+
+		int modbit = 0;
+		int maxmodbit = ffs(ll ^ rr) + 1;
+
+		vecint rr_vec = (vecint)_mm256_srav_epi32(_mm256_set1_epi32(rr), indexes);
+
+#define LOOP(content) if(modbit + 8 <= maxmodbit) { \
+			vec_ans = (vecint)reduce((__m256i)vec_ans, _mm256_i32gather_epi32((int*)seg, (__m256i)(~((rr_vec & 1) - 1) & (rr_vec - 1)), 4)); \
+			rr_vec >>= 8; \
+			modbit += 8; \
+			content \
+		}
+		LOOP(LOOP(LOOP(LOOP())))
+#undef LOOP
+
+		__m256i tmp = _mm256_i32gather_epi32((int*)seg, (__m256i)(~((rr_vec & 1) - 1) & (rr_vec - 1)), 4);
+		__m256i mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(maxmodbit & 7), indexes);
+		vec_ans = (vecint)reduce((__m256i)vec_ans, _mm256_blendv_epi8(identity_vec, tmp, mask));
+	} else {
+		vec_ans[0] = reduce(vec_ans[0], seg[(r + MAXN) >> mbit]);
+	}
+
+	// vec_ans = 7 6 5 4 3 2 1 0
+	__m128i low128 = _mm256_castsi256_si128((__m256i)vec_ans); // 3 2 1 0
+	__m128i high128 = _mm256_extractf128_si256((__m256i)vec_ans, 1); // 7 6 5 4
+	__m128i ans128 = reduce(low128, high128); // 7+3 6+2 5+1 4+0
+	DATA ans = identity_element;
+	for(int i = 0; i < 4; i++) {
+		ans = reduce(ans, ((DATA __attribute__((vector_size(16))))ans128)[i]);
+	}
+	return ans;
+}
+
+void init_segment_tree() // before calling this function, fill array from seg[MAXN] to seg[2*MAXN-1]
+{
+	for(int i = MAXN - 1; i >= 1; i--) {
+		seg[i] = reduce(seg[i * 2], seg[i * 2 + 1]);
+	}
+	seg[0] = identity_element;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__crazy_segment_tree</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

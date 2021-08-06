@@ -1,0 +1,42 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Hash
+	상수를 줄이려면 P = 2로 바꾸고 H,mul을 전역 배열로 빼면 된다.
+	Hash hash(s) : 1-based 문자열 s로 해시를 전처리한다. O(N)
+	hash.Query(L,R) : [L, R] 구간의 해시값을 리턴한다. O(1)
+*/
+const int P = 4;
+const int pri[4] = { 2, 3, 5, 13 };
+const int mod[4] = { 993244853, 998244353, 1000000007, 1000000009 };
+// int H[P][1010101], mul[P][1010101];
+struct Hash {
+	vector<int> H[P], mul[P]; //
+	Hash(const string &s) {
+		for (int k = 0; k < P; k++) {
+			H[k] = vector<int>(s.size()); //
+			mul[k] = vector<int>(s.size()); //
+			mul[k][0] = 1;
+		}
+		for (int k = 0; k < P; k++)
+			for (int i = 1; i < s.size(); i++) {
+				H[k][i] = ((ll)H[k][i - 1] * pri[k] + s[i]) % mod[k];
+				mul[k][i] = (ll)mul[k][i - 1] * pri[k] % mod[k];
+			}
+	}
+	array<int, P> Query(int L, int R) {
+		array<int, P> ret;
+		for (int k = 0; k < P; k++) {
+			int val = (H[k][R] - (ll)H[k][L - 1] * mul[k][R - L + 1]) % mod[k]; // R-L이 아니다.
+			if (val < 0) val += mod[k];
+			ret[k] = val;
+		}
+		return ret;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__hash</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

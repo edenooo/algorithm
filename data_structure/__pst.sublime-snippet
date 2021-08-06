@@ -1,0 +1,79 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Persistent Segment Tree (Sum Version)
+	PST tree(v, S1, S2) : vector v로 PST를 생성하고, 이 PST를 버전 0으로 정의한다.
+		S1은 Update()를 호출하는 횟수의 상한, S2는 넉넉히 잡아 주자.
+	tree.Update(from, to, idx, val) : 버전 from의 idx번째 원소에 val을 더한 PST를 버전 to로 정의한다.
+	tree.Query(ver, L, R) : 버전 ver의 PST에서 [L, R] 구간의 합을 구해 리턴한다.
+	tree.Kth(from, to, k) : 버전이 증가하는 순으로 누적한 kth세그일 경우,
+		[from, to] 버전을 누적한 PST에서 k번째 수를 구해 리턴한다. (from > 0)
+*/
+struct Node {
+	int l, r;
+	ll val;
+};
+struct PST {
+	vector<ll> pst;
+	vector<Node> seg;
+	int SZ, _L, _R;
+	int Init(vector<ll> &v, int l, int r) {
+		int n = SZ++;
+		if (l == r) {
+			seg[n].val = v[l];
+			return n;
+		}
+		int mid = l + r >> 1;
+		seg[n].l = Init(v, l, mid);
+		seg[n].r = Init(v, mid + 1, r);
+		seg[n].val = seg[seg[n].l].val + seg[seg[n].r].val;
+		return n;
+	}
+	PST(vector<ll> &v, int S1, int S2) {
+		pst = vector<ll>(S1 + 10);
+		seg = vector<Node>(S2);
+		SZ = 1; _L = 0, _R = (int)v.size() - 1;
+		pst[0] = Init(v, _L, _R);
+	}
+	int Update(int prv, int idx, ll val, int l, int r) {
+		if (r < idx || idx < l) return prv;
+		int n = SZ++;
+		if (l == r) {
+			seg[n].val = seg[prv].val + val;
+			return n;
+		}
+		int mid = l + r >> 1;
+		seg[n].l = Update(seg[prv].l, idx, val, l, mid);
+		seg[n].r = Update(seg[prv].r, idx, val, mid + 1, r);
+		seg[n].val = seg[seg[n].l].val + seg[seg[n].r].val;
+		return n;
+	}
+	void Update(int from, int to, int idx, ll val) {
+		pst[to] = Update(pst[from], idx, val, _L, _R);
+	}
+	ll Query(int n, int L, int R, int l, int r) {
+		if (r < L || R < l) return 0;
+		if (L <= l && r <= R) return seg[n].val;
+		int mid = l + r >> 1;
+		return Query(seg[n].l, L, R, l, mid) + Query(seg[n].r, L, R, mid + 1, r);
+	}
+	ll Query(int ver, int L, int R) {
+		return Query(pst[ver], L, R, _L, _R);
+	}
+	int Kth(int from, int to, ll k, int l, int r) {
+		if (l == r) return l;
+		int mid = l + r >> 1;
+		ll val = seg[seg[to].l].val - seg[seg[from].l].val;
+		if (val >= k) return Kth(seg[from].l, seg[to].l, k, l, mid);
+		return Kth(seg[from].r, seg[to].r, k - val, mid + 1, r);
+	}
+	int Kth(int from, int to, ll k) {
+		return Kth(pst[from - 1], pst[to], k, _L, _R);
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__pst</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

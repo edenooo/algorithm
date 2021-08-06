@@ -1,0 +1,222 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Splay Tree (1-based)
+	ptr[]과 FindByValue()는 [1,n]의 순열을 수정 없이 다룬다고 가정한다.
+	SplayTree tree(v) : (1-based) vector v로 스플레이 트리를 생성한다.
+	tree.Insert(idx,val) : idx 왼쪽에 val을 삽입한다.
+	tree.Delete(idx) : idx를 삭제한다.
+	tree.Add(L,R,val) : [L,R]구간에 val을 더한다.
+	tree.Sum(L,R) : [L,R]구간의 합을 구해 리턴한다. Max, Min도 비슷하다.
+	tree.Reverse(L,R) : [L,R]구간을 뒤집는다.
+	tree.Shift(L,R,k) : [L,R]구간을 오른쪽으로 k칸 시프트한다.
+	tree.FindByValue(x) : 값이 x인 인덱스를 찾아 리턴한다.
+*/
+struct SplayNode {
+	int l, r, p, cnt;
+	ll val, sum, max, min, lazy;
+	bool inv;
+};
+struct SplayTree {
+	vector<SplayNode> s;
+	// vector<int> ptr;
+	int root;
+	SplayTree() {}
+	SplayTree(vector<int> &v) {
+		int n = (int)v.size() - 1;
+		s.reserve(n + 10); s.resize(1); //ptr.resize(n + 10);
+		n += 2; //create dummy node
+		int p = s.size();
+		s.push_back({ 0,0,0,n,0,0,0,0,0,false }); //dummy right
+		root = p;
+		for (int i = n - 1; i >= 1; i--) {
+			int x = s.size();
+			if (i != 1) {
+				// ptr[v[i - 1]] = x;
+				s.push_back({ 0,0,p,i,v[i - 1],v[i - 1],v[i - 1],v[i - 1],0,false });
+			}
+			else s.push_back({ 0,0,p,1,0,0,0,0,0,false }); //dummy left
+			s[p].l = x;
+			p = x;
+		}
+	}
+	void Lazy(int x) {
+		if (s[x].lazy) {
+			s[x].val += s[x].lazy;
+			if (s[x].l) {
+				s[s[x].l].lazy += s[x].lazy;
+				s[s[x].l].sum += s[x].lazy * s[s[x].l].cnt;
+				s[s[x].l].max += s[x].lazy;
+				s[s[x].l].min += s[x].lazy;
+			}
+			if (s[x].r) {
+				s[s[x].r].lazy += s[x].lazy;
+				s[s[x].r].sum += s[x].lazy * s[s[x].r].cnt;
+				s[s[x].r].max += s[x].lazy;
+				s[s[x].r].min += s[x].lazy;
+			}
+			s[x].lazy = 0;
+		}
+		if (s[x].inv) {
+			swap(s[x].l, s[x].r);
+			if (s[x].l) s[s[x].l].inv = !s[s[x].l].inv;
+			if (s[x].r) s[s[x].r].inv = !s[s[x].r].inv;
+			s[x].inv = false;
+		}
+	}
+	void Update(int x) {
+		s[x].cnt = 1;
+		s[x].sum = s[x].val;
+		s[x].max = s[x].val;
+		s[x].min = s[x].val;
+		if (s[x].l) {
+			s[x].cnt += s[s[x].l].cnt;
+			s[x].sum += s[s[x].l].sum;
+			s[x].max = max(s[x].max, s[s[x].l].max);
+			s[x].min = min(s[x].min, s[s[x].l].min);
+		}
+		if (s[x].r) {
+			s[x].cnt += s[s[x].r].cnt;
+			s[x].sum += s[s[x].r].sum;
+			s[x].max = max(s[x].max, s[s[x].r].max);
+			s[x].min = min(s[x].min, s[s[x].r].min);
+		}
+	}
+	void Rotate(int x) {
+		int p = s[x].p;
+		Lazy(p);
+		Lazy(x); //Lazy먼저 해야 l,r이 정상적으로 나온다!
+		int l = s[x].l, r = s[x].r;
+		if (x == s[p].l) {
+			s[p].l = r; s[r].p = p; // p->r 잇기
+			s[x].r = p; // x->p 잇기
+		}
+		else {
+			s[p].r = l; s[l].p = p;
+			s[x].l = p;
+		}
+		s[x].p = s[p].p; // pp->x 잇기
+		s[p].p = x;
+		if (s[x].p == 0) root = x;
+		else {
+			if (s[s[x].p].l == p) s[s[x].p].l = x;
+			else s[s[x].p].r = x;
+		}
+		Update(p);
+		Update(x);
+	}
+	void Splay(int x) {
+		while (s[x].p) {
+			int p = s[x].p;
+			int pp = s[p].p;
+			if (pp) {
+				if ((x == s[p].l) == (p == s[pp].l)) Rotate(p); //zig-zig
+				else Rotate(x); //zig-zag
+			}
+			Rotate(x);
+		}
+	}
+	void Kth(int k) {
+		int x = root;
+		while (1) {
+			Lazy(x);
+			while (s[x].l && s[s[x].l].cnt > k) { //더미노드라 >=가 아님
+				x = s[x].l;
+				Lazy(x);
+			}
+			if (s[x].l) k -= s[s[x].l].cnt;
+			if (k == 0) break;
+			k--;
+			x = s[x].r;
+		}
+		Splay(x);
+	}
+	void Interval(int L, int R) { // root->r->l이 L~R 구간을 담고 있다.
+		Kth(L - 1);
+		int x = root;
+		root = s[x].r;
+		s[root].p = 0;
+		Kth(R - L + 1);
+		s[x].r = root;
+		s[root].p = x;
+		root = x;
+		Splay(root);
+	}
+	void Insert(int idx, ll val) { //idx 왼쪽에 삽입
+		Kth(idx);
+		int x = s[root].l;
+		Lazy(x);
+		while (s[x].r) {
+			x = s[x].r;
+			Lazy(x);
+		}
+		s[x].r = s.size();
+		s.push_back({ 0,0,x,1,val,val,val,val,0,false });
+		Splay(s[x].r);
+	}
+	void Delete(int idx) {
+		Kth(idx);
+		int x = root;
+		if (s[x].l && s[x].r) {
+			root = s[x].l;
+			s[root].p = 0;
+			int y = root;
+			while (s[y].r) y = s[y].r;
+			s[y].r = s[x].r;
+			s[s[x].r].p = y;
+			Splay(y);
+		}
+		else if (s[x].l) {
+			root = s[x].l;
+			s[root].p = 0;
+		}
+		else if (s[x].r) {
+			root = s[x].r;
+			s[root].p = 0;
+		}
+		else root = 0;
+	}
+	void Add(int L, int R, ll val) {
+		Interval(L, R);
+		int x = s[s[root].r].l;
+		s[x].lazy += val;
+		s[x].sum += val * s[x].cnt;
+		s[x].max += val;
+		s[x].min += val;
+	}
+	ll Sum(int l, int r) {
+		Interval(l, r);
+		return s[s[s[root].r].l].sum;
+	}
+	ll Max(int l, int r) {
+		Interval(l, r);
+		return s[s[s[root].r].l].max;
+	}
+	ll Min(int l, int r) {
+		Interval(l, r);
+		return s[s[s[root].r].l].min;
+	}
+	void Reverse(int L, int R) {
+		Interval(L, R);
+		int x = s[s[root].r].l;
+		s[x].inv = !s[x].inv;
+	}
+	void Shift(int L, int R, int k) { //오른쪽으로 k칸 시프트
+		int MOD = R - L + 1;
+		k %= MOD; k += MOD; k %= MOD;
+		if (k == 0) return;
+		Reverse(L, R);
+		Reverse(L, L + k - 1);
+		Reverse(L + k, R);
+	}
+	// int FindByValue(int x) {
+	// 	Splay(ptr[x]);
+	// 	return s[s[root].l].cnt;
+	// }
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__splay</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

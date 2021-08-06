@@ -1,0 +1,64 @@
+<snippet>
+	<content><![CDATA[
+/*
+	Dinic O(min(Ef, V^2E)), Unit Capacity O(min(V^(2/3)E, EsqrtE))
+	Dinic<int> dinic(V) : 정점 V개로 그래프를 생성한다.
+	dinic.AddEdge(a, b, c) : (a, b) 간선을 용량 c로 생성한다.
+	dinic.Run(src, snk) : max flow를 리턴한다.
+*/
+#define FLOW_MAX 1234567890
+template<class Cap> struct Dinic {
+	struct Edge { int next, rev; Cap c, f; };
+	int N;
+	vector<vector<Edge> > g;
+	vector<int> lv, work;
+	queue<int> q;
+	Dinic(int n) : N(n), g(n), lv(n), work(n) {}
+	void AddEdge(int a, int b, Cap c) {
+		g[a].push_back({ b, (int)g[b].size(), c, 0 });
+		g[b].push_back({ a, (int)g[a].size() - 1, 0, 0 });
+	}
+	Cap dfs(int n, int snk, Cap flow) {
+		if (n == snk) return flow;
+		for (int &i = work[n]; i < g[n].size(); i++) {
+			auto &e = g[n][i];
+			if (e.c - e.f > 0 && lv[e.next] == lv[n] + 1) {
+				Cap cost = dfs(e.next, snk, min(flow, e.c - e.f));
+				if (cost > 0) {
+					e.f += cost;
+					g[e.next][e.rev].f -= cost;
+					return cost;
+				}
+			}
+		}
+		return 0;
+	}
+	Cap Run(int src, int snk, Cap upper = FLOW_MAX) {
+		Cap ret = 0;
+		while (1) {
+			fill(lv.begin(), lv.end(), -1);
+			q.push(src); lv[src] = 0;
+			while (!q.empty()) {
+				int n = q.front(); q.pop();
+				for (auto &e : g[n])
+					if (e.c - e.f > 0 && lv[e.next] == -1)
+						q.push(e.next), lv[e.next] = lv[n] + 1;
+			}
+			if (lv[snk] == -1) break;
+			fill(work.begin(), work.end(), 0);
+			while (1) {
+				Cap flow = dfs(src, snk, upper - ret);
+				ret += flow;
+				if (flow == 0 || ret == upper) break;
+			}
+			if (ret == upper) break;
+		}
+		return ret;
+	}
+};
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__dinic</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
