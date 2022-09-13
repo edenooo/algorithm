@@ -1,0 +1,54 @@
+<snippet>
+	<content><![CDATA[
+// MOD값 수정 필요함
+#define MOD 998244353
+ll pw(ll a, ll n)
+{
+	ll ret = 1;
+	while(n)
+	{
+		if (n&1) ret=ret*a%MOD;
+		a=a*a%MOD;
+		n >>= 1;
+	}
+	return ret;
+}
+ll inv(ll a)
+{
+	return pw(a, MOD-2);
+}
+ll Det(vector<vector<ll> > A)
+{
+	assert(A.size() > 0 && A.size() == A[0].size());
+	int N = A.size();
+	ll ret = 1;
+	for(int i=0; i<N; i++) // gaussian elimination
+	{
+		if (A[i][i] == 0)
+			for(int j=i+1; j<N; j++)
+				if (A[j][i] != 0)
+				{
+					for(int k=i; k<N; k++)
+						swap(A[i][k], A[j][k]);
+					ret *= -1; // 행 swap은 -det
+					break;
+				}
+		if (A[i][i] == 0) return 0;
+		for(int j=i+1; j<N; j++)
+		{
+			ll a = A[j][i] * inv(A[i][i]) % MOD;
+			for(int k=i; k<N; k++)
+				A[j][k] -= a * A[i][k], A[j][k] %= MOD;
+		}
+	}
+	for(int i=0; i<N; i++)
+		ret *= A[i][i], ret %= MOD;
+	ret += MOD; ret %= MOD;
+	return ret;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__determinant</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>
