@@ -1,7 +1,7 @@
 <snippet>
 	<content><![CDATA[
 /*
-	MCMF O(VE+fElogV), Min Cost, Using Cycle Canceling Version
+	MCMF O(VE+fElogV), Min Cost, Dual Version
 	주의 : 문제가 MCF를 요구하는 경우도 있으니 잘 확인하자.
 	MCMF<int> mcmf(V) : 정점 V개로 그래프를 생성한다.
 	mcmf.AddEdge(a, b, c, w) : (a, b) 간선을 용량 c, 비용 w로 생성한다.
