@@ -36,6 +36,7 @@ template<class Cost> struct MCMF {
 		}
 	}
 	pair<int, Cost> Run(int src, int snk, int upper = 1234567890) {
+		fill(dual.begin(), dual.end(), 0); // clear
 		MakePositive(src, snk);
 		vector<Cost> dist(N);
 		vector<int> p(N), pp(N);
