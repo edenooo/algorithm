@@ -16,6 +16,7 @@ pair<ll,ll> inv_gcd(ll a, ll b) { // {g, inv(a/g) (mod b/g)} 리턴
 ll CRT(ll a1, ll n1, ll a2, ll n2) {
 	a1 %= n1; if (a1 < 0) a1 += n1;
 	a2 %= n2; if (a2 < 0) a2 += n2;
+	if (n1 < n2) swap(n1, n2), swap(a1, a2); // 불균형이 클 때 오버플로우 피하기
 	auto [g,inv_n1] = inv_gcd(n1, n2);
 	if ((a2-a1)%g != 0) return -1;
 	a2 -= a1; a2 /= g; n2 /= g;

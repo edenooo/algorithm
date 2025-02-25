@@ -1,0 +1,6 @@
+{
+    "cmd": ["wsl.exe", "g++-9", "-std=c++17", "-O2", "-ggdb3", "-g", "-D_GLIBCXX_DEBUG", "-D_GLIBCXX_DEBUG_PEDANTIC", "-DLOCAL", "-Wall", "-Wno-sign-compare", "-Wno-unused-variable", "-Wno-unused-but-set-variable", "-Wno-unused-value", "-Wno-parentheses", "-Wno-reorder", "-Wno-misleading-indentation", "-Wno-narrowing", "-Winvalid-pch", "-Wno-unused-result", "-fconcepts", "-fsanitize=address,undefined", "./${file_name}", "-o", "${file_base_name}"],
+    "shell":true,
+    "working_dir":"$file_path",
+    "selector":"source.cpp"
+}

@@ -1,0 +1,80 @@
+<snippet>
+	<content><![CDATA[
+namespace sqrt_decomposition {
+	const int N = 200704, SZ = 448, CNT = N/SZ; // N % SZ == 0, [0, N-1], [0, SZ-1], [0, CNT-1]
+	ll c[N], s[N], C[CNT], S[CNT];
+	void Upd(int i)
+	{
+		for(int j=i/SZ*SZ; j<i/SZ*SZ+SZ; j++)
+		{
+			if (j < i) c[j]--, s[j] += i;
+			else c[j]++, s[j] -= i;
+		}
+		for(int j=0; j<CNT; j++)
+			if (j != i/SZ)
+			{
+				if (j < i/SZ) C[j]--, S[j] += i;
+				else C[j]++, S[j] -= i;
+			}
+	}
+	ll Qry(int i)
+	{
+		return (s[i] + S[i/SZ]) + i*(c[i] + C[i/SZ]);
+	}
+}
+
+// sum_{l <= j <= i <= r}(|A[j]-A[i]|)
+// A: 1-based, q.idx: 0-based
+vector<ll> sweepline_mo(int N, const int SZ, const vector<int> A, vector<array<int, 3> > q)
+{
+	sort(q.begin(), q.end(), [&](const array<int, 3> &a, const array<int, 3> &b){
+		if (a[1]/SZ != b[1]/SZ) return a[1]/SZ < b[1]/SZ;
+		return (a[1]/SZ % 2) ? (a[0] < b[0]) : (a[0] > b[0]);
+	});
+
+	vector<ll> ans(q.size());
+	vector<vector<array<int, 4> > > v(N+1);
+	vector<ll> S(N+1);
+	int l = 1, r = 0;
+	for(auto [L,R,i] : q) // dry MO
+	{
+		if (r < R) v[l-1].push_back({r+1, R, i, -1}), r = R;
+		if (L < l) v[r].push_back({L, l-1, i, +1}), l = L;
+		if (R < r) v[l-1].push_back({R+1, r, i, -1 * -1}), r = R; // 구간을 축소하니까 답에서 빼짐
+		if (l < L) v[r].push_back({l, L-1, i, +1 * -1}), l = L; // 구간을 축소하니까 답에서 빼짐
+	}
+	for(int i=0; i<=N; i++) // sweepline
+	{
+		if (i)
+		{
+			sqrt_decomposition::Upd(A[i]);
+			S[i] = S[i-1] + sqrt_decomposition::Qry(A[i]);
+		}
+		for(auto [L,R,idx,sgn] : v[i])
+			for(int j=L; j<=R; j++)
+				ans[idx] += sqrt_decomposition::Qry(A[j]) * sgn;
+	}
+	l = 1, r = 0;
+	for(auto [L,R,i] : q) // wet MO
+	{
+		if (r < R) ans[i] += S[R] - S[r], r = R;
+		if (L < l) ans[i] -= S[l-1] - S[L-1], l = L;
+		if (R < r) ans[i] -= S[r] - S[R], r = R;
+		if (l < L) ans[i] += S[L-1] - S[l-1], l = L;
+	}
+
+	vector<ll> res(q.size());
+	ll sum = 0;
+	for(auto [L,R,i] : q)
+	{
+		sum += ans[i]; // 변화량 더해주기	
+		res[i] = sum;
+	}
+	return res;
+}
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>__sweepline_mo</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<!-- <scope>source.python</scope> -->
+</snippet>

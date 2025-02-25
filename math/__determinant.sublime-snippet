@@ -34,9 +34,10 @@ ll Det(vector<vector<ll> > A)
 					break;
 				}
 		if (A[i][i] == 0) return 0;
+		ll d = inv(A[i][i]);
 		for(int j=i+1; j<N; j++)
 		{
-			ll a = A[j][i] * inv(A[i][i]) % MOD;
+			ll a = A[j][i] * d % MOD;
 			for(int k=i; k<N; k++)
 				A[j][k] -= a * A[i][k], A[j][k] %= MOD;
 		}

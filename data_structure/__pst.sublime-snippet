@@ -17,7 +17,7 @@ struct PST {
 	vector<ll> pst;
 	vector<Node> seg;
 	int SZ, _L, _R;
-	int Init(vector<ll> &v, int l, int r) {
+	int Init(const vector<ll> &v, int l, int r) {
 		int n = SZ++;
 		if (l == r) {
 			seg[n].val = v[l];
@@ -29,7 +29,7 @@ struct PST {
 		seg[n].val = seg[seg[n].l].val + seg[seg[n].r].val;
 		return n;
 	}
-	PST(vector<ll> &v, int S1, int S2) {
+	PST(const vector<ll> &v, int S1, int S2) {
 		pst = vector<ll>(S1 + 10);
 		seg = vector<Node>(S2);
 		SZ = 1; _L = 0, _R = (int)v.size() - 1;
@@ -52,7 +52,7 @@ struct PST {
 		pst[to] = Update(pst[from], idx, val, _L, _R);
 	}
 	ll Query(int n, int L, int R, int l, int r) {
-		if (r < L || R < l) return 0;
+		if (L > R || r < L || R < l) return 0;
 		if (L <= l && r <= R) return seg[n].val;
 		int mid = l + r >> 1;
 		return Query(seg[n].l, L, R, l, mid) + Query(seg[n].r, L, R, mid + 1, r);
